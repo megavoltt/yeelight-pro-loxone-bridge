@@ -29,13 +29,14 @@ VIU_LINES = [
 
 VO_LINES = [
     '<?xml version="1.0" encoding="utf-8"?>',
-    '<VirtualOut Title="Yeelight Pro — управление" Comment="Мост WB {}. Формат: /set/&lt;узел&gt;/&lt;параметр&gt;/&lt;значение&gt;. p: 0/1, l: 0-100 %, ct: 2700-6500 К, ctp: CCT в % 0-100 (0=2700 К, 100=6500 К)." Address="{}" CmdInit="" CloseAfterSend="true" CmdSep="">'
+    '<VirtualOut Title="Yeelight Pro — управление" Comment="Мост WB {}. Формат: /set/&lt;узел&gt;/&lt;параметр&gt;/&lt;значение&gt;. p: 0/1, l: 0-100 %, ct: 2700-6500 К, ctp: CCT в % 0-100, sww: составной Smart Actuator WW или Lumitech DMX." Address="{}" CmdInit="" CloseAfterSend="true" CmdSep="">'
     .format(WB_IP, HTTP),
     '\t<Info templateType="3" minVersion="16000610"/>',
     '\t<VirtualOutCmd Title="Lamp — вкл/выкл" Comment="Питание светильника lamp" CmdOnMethod="GET" CmdOn="/set/lamp/p/1" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="/set/lamp/p/0" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="false" Repeat="0" RepeatRate="0"/>',
     '\t<VirtualOutCmd Title="Lamp — яркость" Comment="Яркость 0-100 % (0 = выкл)" CmdOnMethod="GET" CmdOn="/set/lamp/l/&lt;v&gt;" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="true" Repeat="0" RepeatRate="0"/>',
     '\t<VirtualOutCmd Title="Lamp — цветовая температура" Comment="CCT 2700-6500 К" CmdOnMethod="GET" CmdOn="/set/lamp/ct/&lt;v&gt;" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="true" Repeat="0" RepeatRate="0"/>',
     '\t<VirtualOutCmd Title="Lamp — CCT 0-100 %" Comment="Температура в процентах: 0=2700 К ... 100=6500 К" CmdOnMethod="GET" CmdOn="/set/lamp/ctp/&lt;v&gt;" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="true" Repeat="0" RepeatRate="0"/>',
+    '\t<VirtualOutCmd Title="Lamp — Smart WW (яркость + CCT)" Comment="Выход LC Lighting Controller: Smart WW 201002700 = 100 %, 2700 К; Lumitech DMX 29029029 = 29 %, 4600 К; 0 = выкл" CmdOnMethod="GET" CmdOn="/set/lamp/sww/&lt;v&gt;" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="true" Repeat="0" RepeatRate="0"/>',
     '\t<VirtualOutCmd Title="VDevice — канал 1" Comment="Виртуальное устройство, канал 1" CmdOnMethod="GET" CmdOn="/set/vdevice/1-p/1" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="/set/vdevice/1-p/0" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="false" Repeat="0" RepeatRate="0"/>',
     '\t<VirtualOutCmd Title="VDevice — канал 2" Comment="Виртуальное устройство, канал 2" CmdOnMethod="GET" CmdOn="/set/vdevice/2-p/1" CmdOnHTTP="" CmdOnPost="" CmdOffMethod="GET" CmdOff="/set/vdevice/2-p/0" CmdOffHTTP="" CmdOffPost="" CmdAnswer="" HintText="" Analog="false" Repeat="0" RepeatRate="0"/>',
     '</VirtualOut>',

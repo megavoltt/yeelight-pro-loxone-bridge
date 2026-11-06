@@ -2,6 +2,8 @@
 """Валидация шаблонов VIU/VO Yeelight Pro (формат wb-loxone)."""
 import xml.etree.ElementTree as ET
 
+from yeelight_bridge import Bridge
+
 BS_V = chr(92) + "v"  # \v — маркер значения Loxone
 
 SAMPLES = [
@@ -26,7 +28,51 @@ def extract(check, payload):
     return val
 
 
+def test_smart_ww():
+    cases = [
+        (0, {"p": False}),
+        (201002700, {"p": True, "l": 100, "ct": 2700}),
+        (200504000, {"p": True, "l": 50, "ct": 4000}),
+        (200256500, {"p": True, "l": 25, "ct": 6500}),
+        (200012700, {"p": True, "l": 1, "ct": 2700}),
+        (200501000, {"p": True, "l": 50, "ct": 2700}),
+        (2005012000, {"p": True, "l": 50, "ct": 6500}),
+    ]
+    for raw, expected in cases:
+        actual = Bridge.decode_smart_ww(raw, 2700, 6500)
+        assert actual == expected, "%s: %r != %r" % (raw, actual, expected)
+    for raw in (1, 100, 20050400, 209992700):
+        try:
+            Bridge.decode_smart_ww(raw, 2700, 6500)
+        except ValueError:
+            continue
+        raise AssertionError("принят неверный Smart WW: %s" % raw)
+    print("Smart WW: %d кодов и %d ошибочных значений OK" % (len(cases), 4))
+
+
+def test_lumitech():
+    cases = [
+        (29029029, {"p": True, "l": 29, "ct": 4600}),
+        (100000000, {"p": True, "l": 100, "ct": 6500}),
+        (100100, {"p": True, "l": 100, "ct": 2700}),
+        (100100100, {"p": True, "l": 100, "ct": 4600}),
+        (50050050, {"p": True, "l": 50, "ct": 4600}),
+    ]
+    for raw, expected in cases:
+        actual = Bridge.decode_smart_ww(raw, 2700, 6500)
+        assert actual == expected, "%s: %r != %r" % (raw, actual, expected)
+    for raw in (1, 100, 100000, 101000000):
+        try:
+            Bridge.decode_smart_ww(raw, 2700, 6500)
+        except ValueError:
+            continue
+        raise AssertionError("принят неверный Lumitech: %s" % raw)
+    print("Lumitech: %d кодов и %d ошибочных значений OK" % (len(cases), 4))
+
+
 def main():
+    test_smart_ww()
+    test_lumitech()
     tree = ET.fromstring(open("VIU_Yeelight_Pro.xml", encoding="utf-8-sig").read())
     ok = True
     print("VIU (все команды аналоговые):")
@@ -44,13 +90,16 @@ def main():
 
     tree2 = ET.fromstring(open("VO_Yeelight_Pro.xml", encoding="utf-8-sig").read())
     print("\nVO (HTTP VirtualOut, подстановка v=80):")
+    sww_found = False
     for cmd in tree2:
         if cmd.tag != "VirtualOutCmd":
             continue
         on = (cmd.get("CmdOn") or "").replace("<v>", "80")
         off = (cmd.get("CmdOff") or "").replace("<v>", "80")
+        sww_found |= cmd.get("CmdOn") == "/set/lamp/sww/<v>"
         print("  %-32s analog=%-5s on=%-24s off=%s" % (cmd.get("Title"),
                                                        cmd.get("Analog"), on, off))
+    assert sww_found, "в VO нет команды /set/lamp/sww/<v>"
 
 
 if __name__ == "__main__":

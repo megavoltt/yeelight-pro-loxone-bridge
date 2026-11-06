@@ -11,7 +11,8 @@
     yeelight.<alias>.<param>=<value>
 
 Параметры светильника: p (0/1), l (0-100 %), ct (2700-6500 K), ctp (0-100 %
-цветовой температуры), o (online 0/1). Конфигурация — JSON, см. DEFAULTS.
+цветовой температуры), sww (составной Smart Actuator WW или Lumitech DMX от Lighting Controller),
+o (online 0/1). Конфигурация — JSON, см. DEFAULTS.
 """
 import argparse
 import html
@@ -49,7 +50,8 @@ DEFAULTS = {
 
 PRETTY_PARAM = {
     "p": "Вкл/выкл", "l": "Яркость", "ct": "Цветовая температура",
-    "ctp": "Цветовая температура, %", "c": "Цвет", "m": "Режим", "o": "Online",
+    "ctp": "Цветовая температура, %", "sww": "Smart WW (яркость + CCT)",
+    "c": "Цвет", "m": "Режим", "o": "Online",
 }
 
 
@@ -229,6 +231,10 @@ class Bridge:
                 else:  # p, N-p — цифровые
                     lines.append(self._vo_cmd(name, entry, param,
                                               base + "/1", base + "/0"))
+            if "l" in keys and "ct" in keys:
+                lines.append(self._vo_cmd(
+                    "%s — %s" % (pretty_param("sww"), entry["name"] or entry["alias"]),
+                    entry, "sww", "/set/%s/sww/&lt;v&gt;" % entry["alias"], ""))
         lines.append("</VirtualOut>")
         return self._xml_bytes(lines), self._tpl_filename("VO", title)
 
@@ -414,6 +420,33 @@ class Bridge:
             raise ValueError(text)
         return match.group(1), match.group(2), match.group(3)
 
+    @staticmethod
+    def decode_smart_ww(num, ct_min, ct_max):
+        value = int(round(num))
+        if value == 0:
+            return {"p": False}
+        match = re.fullmatch(r"20(\d{3})(\d{4,5})", str(value))
+        if match:
+            level = int(match.group(1))
+            if level > 100:
+                raise ValueError("яркость Smart WW должна быть 0-100 %")
+            ct = max(ct_min, min(ct_max, int(match.group(2))))
+            if level == 0:
+                return {"p": False}
+            return {"p": True, "l": level, "ct": ct}
+        blue, remainder = divmod(value, 1000000)
+        green, red = divmod(remainder, 1000)
+        if value < 1000 or max(red, green, blue) > 100:
+            raise ValueError("ожидается код Smart WW или Lumitech DMX (R + G*1000 + B*1000000)")
+        level = max(red, green, blue)
+        if level == 0:
+            return {"p": False}
+        if red + blue == 0:
+            raise ValueError("код Lumitech не описывает белый свет")
+        warmth = red / (red + blue)
+        ct = int(round(ct_max - warmth * (ct_max - ct_min)))
+        return {"p": True, "l": level, "ct": ct}
+
     def execute(self, alias, param, raw):
         nid = self.by_alias.get(alias)
         if nid is None:
@@ -435,6 +468,11 @@ class Bridge:
         elif param == "ctp":
             frac = max(0.0, min(100.0, num)) / 100.0
             props = {"ct": int(round(ct_min + frac * (ct_max - ct_min)))}
+        elif param == "sww":
+            try:
+                props = self.decode_smart_ww(num, ct_min, ct_max)
+            except ValueError as err:
+                return False, "некорректный Smart WW: %s" % err
         elif re.match(r"^\d+-[A-Za-z0-9_-]+$", param):
             # каналы виртуальных устройств шлюза: "1-p", "2-p" и т.п.
             props = {param: num != 0}
@@ -517,8 +555,9 @@ button{{padding:4px 14px}}
 <option value="l">l — яркость (0–100 %)</option>
 <option value="ct">ct — температура (2700–6500 К)</option>
 <option value="ctp">ctp — температура (0–100 %)</option>
+<option value="sww">sww — Smart WW / Lumitech (200504000 или 29029029)</option>
 </select>
-Значение: <input name="value" size="6" value="1">
+Значение: <input name="value" size="12" value="1">
 <button type="submit">Отправить</button>
 </form>
 <h2>Переподключиться к шлюзу</h2>
