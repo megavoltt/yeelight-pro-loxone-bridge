@@ -1,0 +1,17 @@
+{
+  "gateway_ip": "192.168.1.53",
+  "gateway_port": 65443,
+  "loxone_ip": "192.168.1.91",
+  "loxone_port": 7002,
+  "command_port": 7002,
+  "poll_interval": 30,
+  "transition_ms": 500,
+  "aliases": {
+    "4162314": "vdevice"
+  },
+  "ct_min": 2700,
+  "ct_max": 6500,
+  "key": "",
+  "http_bind": "0.0.0.0",
+  "http_port": 8082
+}
