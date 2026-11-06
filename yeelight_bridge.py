@@ -631,6 +631,12 @@ def render_page(bridge, msg=""):
     return body.encode("utf-8")
 
 
+def render_config_saved_page(bridge):
+    return render_page(bridge, "Конфигурация сохранена. Перезапуск...").replace(
+        b'<meta http-equiv="refresh" content="15">',
+        b'<meta http-equiv="refresh" content="8;url=/">')
+
+
 class WebHandler(BaseHTTPRequestHandler):
     bridge = None
     cfg_path = None
@@ -732,9 +738,7 @@ class WebHandler(BaseHTTPRequestHandler):
         elif url.path == "/config":
             try:
                 save_config(self.bridge, self.cfg_path, query)
-                body = render_page(self.bridge, "Конфигурация сохранена. Перезапуск...").replace(
-                    '<meta http-equiv="refresh" content="15">',
-                    '<meta http-equiv="refresh" content="8;url=/">')
+                body = render_config_saved_page(self.bridge)
                 self.send_html(body)
                 threading.Timer(1.0, os._exit, args=(0,)).start()
             except Exception as err:  # noqa: BLE001 — показать любую ошибку в вебе

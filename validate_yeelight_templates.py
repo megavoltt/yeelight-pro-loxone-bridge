@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Валидация шаблонов VIU/VO Yeelight Pro (формат wb-loxone)."""
+import json
+import os
+import tempfile
 import xml.etree.ElementTree as ET
 
-from yeelight_bridge import Bridge
+from yeelight_bridge import Bridge, DEFAULTS, render_config_saved_page, save_config
 
 BS_V = chr(92) + "v"  # \v — маркер значения Loxone
 
@@ -70,9 +73,28 @@ def test_lumitech():
     print("Lumitech: %d кодов и %d ошибочных значений OK" % (len(cases), 4))
 
 
+def test_config_save():
+    bridge = Bridge(dict(DEFAULTS))
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "config.json")
+        save_config(bridge, path, {
+            "gateway_ip": ["192.0.2.1"], "poll_interval": ["31"],
+            "aliases": ["4162314=vdevice"],
+        })
+        with open(path, encoding="utf-8") as fh:
+            saved = json.load(fh)
+    assert saved["gateway_ip"] == "192.0.2.1"
+    assert saved["poll_interval"] == 31
+    assert saved["aliases"] == {"4162314": "vdevice"}
+    page = render_config_saved_page(bridge)
+    assert b'<meta http-equiv="refresh" content="8;url=/">' in page
+    print("Сохранение конфигурации и страница перезапуска: OK")
+
+
 def main():
     test_smart_ww()
     test_lumitech()
+    test_config_save()
     tree = ET.fromstring(open("VIU_Yeelight_Pro.xml", encoding="utf-8-sig").read())
     ok = True
     print("VIU (все команды аналоговые):")
